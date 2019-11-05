@@ -4,7 +4,7 @@ Solutions by James Smith.
 
 There are two ways to solve this -> split and count or using tr... one is short code - one is longer - but much faster.
 
-## Version 1 - short code
+## Version 1 - short code - ch-1a.pl
 
 Uses lc, split and grep to count the elements and put them in a hash... looping through each file a line at a time with <>
 
@@ -21,7 +21,17 @@ say "$_: $T{$_}" foreach 'a'..'z';
 
 Running this over 13Mbytes of PHP takes approximately 6.5 seconds...
 
-## Version 2 - faster code
+## Version 2 - short code again - but faster - ch-1b.pl
+
+The grep is not the fastest method we can employ here - a faster - although not as readable solution requires us to remove the non a-z characters out earlier...
+
+So we replace the loop line with
+
+```perl
+  $T{$_}++ foreach split m{}, (lc $_) =~ s{[^a-z]}{}r; # r - modifier return resultant string..
+```
+
+## Version 3 - now for the faster code - ch-1c.pl
 
 Now counting letters in a string is quickest using the tr or y operator - as this requires the number of characters
 changed. Without using eval you can't unfortunately sub in a variable into the pattern unlike with m/s... So we
@@ -38,7 +48,6 @@ while(<>) {
   $T{'b'} += y/bB/bB/;
 ..
 ..
-  $T{'y'} += y/yY/yY/;
   $T{'z'} += y/zZ/zZ/;
 }
 
@@ -53,9 +62,9 @@ perl -E 'say "  \$t{'"'"'$_'"'"'} += y/$_".uc($_)."/$_".uc($_)."/;" foreach "a".
 
 This now runs in approxy 0.25 seconds a big improvement...
 
-## Version 3 - nicer output...
+## Version 4 - nicer output... - ch-1d.pl
 
-The version 3 code just expands the version 2 code - but creates a "histogram" to show the distribution (and at the same time formats the totals better)
+The version 4 code just expands the version 3 code - but creates a "histogram" to show the distribution (and at the same time formats the totals better)
 
 ```
 a : 584193 : ##########################
@@ -93,8 +102,9 @@ Again going to extend the challenge to make this generic (in case someone wants 
 Hidden in the solution above was getting the number of digits for a number (so we can format the totals) - we do this again to get the size of the left hand column and the main table columns.
 
 ```perl
-my $sl = int(log($N)/log(10)+1);     ## Get size of integer $N - defines the width of the LH column
-my $sr = int(2*log($N)/log(10)+1);   ## Get size of $N squared - defines the width of other columns
+## Let's do this without number to string conversion to get length!!! - as a Mathematician by trade - we'll work this out with logs....
+my $sl = int(     log($N) / log(10) + 1 );   ## Get size of integer $N - defines the width of the LH column
+my $sr = int( 2 * log($N) / log(10) + 1 );   ## Get size of $N squared - defines the width of other columns
 ```
 and we use this to tweak the formats and the padding/line drawing elements!
 ```perl
@@ -103,26 +113,26 @@ and we use this to tweak the formats and the padding/line drawing elements!
 use strict;
 use feature 'say';
 
-## This solves more than the puzzle - but thought I would make it more generic!
+## This solves more than the problem - but thought I would make it more generic!
 
 ## This gets the size of the square that we want to display...
 
-my $N  = shift =~ s{\D}{}gr || 11;        ## Default to 11 - but use first parameter as size of square!
-my @R  = 1..$N;                           ## Create a "range array" - we use this 4 times!!!
+my $N  = shift =~ s{\D}{}gr || 11;         ## Default to 11 - but use first parameter as size of square!
+my @R  = 1..$N;                            ## Create a "range array" - we use this 4 times!!!
 
 ## Get width of columns for use in the renderer..
 
-my $sl = int( log($N) / log(10) + 1);     ## Get size of integer $N - defines the width of the LH column
-my $sr = int( 2 * log($N) / log(10) + 1); ## Get size of $N squared - defines the width of other columns
-my $fl = sprintf ' %%%dd |', $sl;         ## Create a template for the first column..
-my $fr = sprintf ' %%%dd', $sr;           ## .... and for the other columns!
+my $sl = int(     log($N) / log(10) + 1 ); ## Get size of integer $N - defines the width of the LH column
+my $sr = int( 2 * log($N) / log(10) + 1 ); ## Get size of $N squared - defines the width of other columns
+my $fl = sprintf ' %%%dd |', $sl;          ## Create a template for the first column..
+my $fr = sprintf ' %%%dd',   $sr;          ## .... and for the other columns!
 
 ## Finally we render - make a use of sprintf with the templates and '$' x $ to generate padding
 
-say ' ' x $sl, 'x |',                                               ## Header (LH side)
-    map          { sprintf $fr, $_ }                            @R; ##        (column headers)
-say join '-', '-' x $sl, '-+',                                      ## Separator (LH side)
-    map          { '-' x $sr }                                  @R; ##           (RH side)
+say ' ' x $sl, 'x |',                                               ## Header        (LH side)
+    map          { sprintf $fr, $_ }                            @R; ##               (column headers)
+say join '-', '-' x $sl, '-+',                                      ## Separator     (LH side)
+    map          { '-' x $sr }                                  @R; ##               (RH side)
 say sprintf( $fl, $a=$_ ),                                          ## Body of table (LH headers)
     map          { $a>$_ ? ' ' x ($sr+1) : sprintf $fr, $a*$_ } @R  ##               (content of row)
     foreach                                                     @R;

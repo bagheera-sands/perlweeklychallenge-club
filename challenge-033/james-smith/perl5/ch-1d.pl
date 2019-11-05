@@ -6,6 +6,7 @@ use warnings;
 
 $/=undef;
 my %T;
+
 while(<>) {
   $T{'a'} += y/aA/aA/;
   $T{'b'} += y/bB/bB/;
@@ -34,6 +35,10 @@ while(<>) {
   $T{'y'} += y/yY/yY/;
   $T{'z'} += y/zZ/zZ/;
 }
+my $max = 0;
+foreach('a'..'z') {
+  $max = $T{$_} if $max < $T{$_};
+}
+my $f = 1 + int( log($max) / log 10 );
 
-
-say $_,': ',$T{$_}||0 foreach 'a'..'z';
+say sprintf '%s : %'.$f.'d : %s', $_, $T{$_}, '#' x ($T{$_}/$max*40) foreach 'a'..'z';
